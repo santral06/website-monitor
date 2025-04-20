@@ -28,11 +28,3 @@ jobs:
           CHAT_ID: ${{ secrets.CHAT_ID }}
         run: python checkweb.py  # Script adını güncelleyin
         
-      - name: Upload logs (Opsiyonel)
-        if: always()  # Hata olsa bile çalışır
-        uses: actions/upload-artifact@v3
-        with:
-          name: monitor-logs
-          path: |
-            *.log
-            last_content.txt
