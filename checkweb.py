@@ -8,9 +8,22 @@ URL = "https://drmustafametin.com"  # İzlenecek site
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")  # GitHub Secrets'tan alınacak
 CHAT_ID = os.getenv("CHAT_ID")  # GitHub Secrets'tan alınacak
 
-def send_telegram_notification(message):
+
+
+def send_telegram_notification(message, is_change=False):
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
-    bot.send_message(chat_id=CHAT_ID, text=message, parse_mode='HTML')
+    
+    if is_change:
+        message = f"🚨 **DEĞİŞİKLİK VAR!**\n{message}"
+    else:
+        message = f"✅ **Değişiklik Yok**\n{message}"
+    
+    bot.send_message(
+        chat_id=CHAT_ID,
+        text=message,
+        parse_mode='Markdown'
+    )
+
 
 # Web sayfasını çek
 response = requests.get(URL)
