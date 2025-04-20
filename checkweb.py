@@ -3,7 +3,7 @@ import telegram
 import os
 
 # Ayarlar
-URL = "https://example.com"  # Kontrol edilecek site
+URL = "https://drmustafametin.com"  # Kontrol edilecek site
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")  # GitHub'dan alınacak
 CHAT_ID = os.getenv("CHAT_ID")  # GitHub'dan alınacak
 
