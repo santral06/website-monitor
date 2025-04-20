@@ -1,9 +1,11 @@
 import requests
 import telegram
 import os
+import tracemalloc
 from difflib import unified_diff
 from datetime import datetime
 
+tracemalloc.start() 
 # Config
 URL = "https://drmustafametin.com"
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
