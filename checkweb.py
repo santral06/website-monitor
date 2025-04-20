@@ -9,6 +9,9 @@ URL = "https://drmustafametin.com"
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 
+print(f"Token exists: {bool(TELEGRAM_TOKEN)}")  # Should be True
+print(f"Chat ID exists: {bool(CHAT_ID)}")  # Should be True
+
 def send_telegram_notification(message, is_change=False):
     try:
         bot = telegram.Bot(token=TELEGRAM_TOKEN)
