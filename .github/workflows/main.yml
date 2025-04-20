@@ -21,12 +21,10 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-        
-        - name: Run monitor with memory tracking
-  env:
-    PYTHONTRACEMALLOC: 2  # Enables memory tracing
-    TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-    CHAT_ID: ${{ secrets.CHAT_ID }}
-  run: |
-    python -X tracemalloc=5 checkweb.py.py 2>&1 | tee -a logs.txt
+          
+      - name: Run website monitor
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+        run: python checkweb.py  # Script adını güncelleyin
         
