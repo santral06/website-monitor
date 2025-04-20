@@ -20,7 +20,7 @@ def send_telegram_notification(message, is_change=False):
         bot.send_message(
             chat_id=CHAT_ID,
             text=message,
-            parse_mode='Markdown',
+            parse_mode='HTML',
             disable_web_page_preview=True
         )
     except Exception as e:
