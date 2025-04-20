@@ -1,22 +1,38 @@
 name: Website Monitor
 on:
   schedule:
-    - cron: '*/5 * * * *'  # 5 dakikada bir (UTC zaman dilimi)
-  workflow_dispatch:  # Manuel tetikleme seçeneği
+    - cron: '*/5 * * * *'  # 5 dakikada bir (UTC)
+  workflow_dispatch:  # Manuel tetikleme
 
 jobs:
   monitor:
     runs-on: ubuntu-latest
+    timeout-minutes: 5  # Timeout süresi
+    
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+        
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.10'
+          
       - name: Install dependencies
-        run: pip install -r requirements.txt
-      - name: Run script
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Run website monitor
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
-        run: python checkweb.py
+        run: python your_script_name.py  # Script adını güncelleyin
+        
+      - name: Upload logs (Opsiyonel)
+        if: always()  # Hata olsa bile çalışır
+        uses: actions/upload-artifact@v3
+        with:
+          name: monitor-logs
+          path: |
+            *.log
+            last_content.txt
