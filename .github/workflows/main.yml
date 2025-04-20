@@ -26,7 +26,7 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           CHAT_ID: ${{ secrets.CHAT_ID }}
-        run: python your_script_name.py  # Script adını güncelleyin
+        run: python checkweb.py  # Script adını güncelleyin
         
       - name: Upload logs (Opsiyonel)
         if: always()  # Hata olsa bile çalışır
