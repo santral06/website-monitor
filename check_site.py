@@ -1,70 +1,48 @@
-import requests
 import hashlib
+import requests
 import os
-from telegram import Bot
+import telegram
 
-# Telegram Bot Token'ınızı ve Chat ID'nizi ortam değişkenlerinden alın
-TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID")
-WEBSITE_URL = "https://www.drmustafametin.com" # Kontrol etmek istediğiniz web sitesi adresini buraya yazın
+URL = "https://drmustafametin.com"
+HASH_FILE = "site_hash.txt"
 
-# Önceki içeriğin hash'ini saklamak için bir dosya adı belirleyin
-HASH_FILE = "website_hash.txt"
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
-def get_website_content(url):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # Hatalı HTTP durum kodları için istisna oluşturur
-        return response.text
-    except requests.exceptions.RequestException as e:
-        print(f"Web sitesine erişirken hata oluştu: {e}")
-        return None
+def get_site_hash():
+    response = requests.get(URL)
+    content = response.text.encode("utf-8")
+    return hashlib.sha256(content).hexdigest()
 
-def calculate_hash(content):
-    if content:
-        return hashlib.sha256(content.encode('utf-8')).hexdigest()
-    return None
+def read_previous_hash():
+    if not os.path.exists(HASH_FILE):
+        return ""
+    with open(HASH_FILE, "r") as f:
+        return f.read().strip()
 
-def load_previous_hash():
-    try:
-        with open(HASH_FILE, "r") as f:
-            return f.read().strip()
-    except FileNotFoundError:
-        return None
+def write_current_hash(hash_value):
+    with open(HASH_FILE, "w") as f:
+        f.write(hash_value)
 
-def save_current_hash(current_hash):
-    if current_hash:
-        with open(HASH_FILE, "w") as f:
-            f.write(current_hash)
+def send_telegram_message(message):
+    if BOT_TOKEN and CHAT_ID:
+        bot = telegram.Bot(token=BOT_TOKEN)
+        bot.send_message(chat_id=CHAT_ID, text=message)
 
-async def send_telegram_message(message):
-    if TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID:
-        bot = Bot(token=TELEGRAM_BOT_TOKEN)
-        try:
-            await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
-        except Exception as e:
-            print(f"Telegram mesajı gönderilirken hata oluştu: {e}")
+def main():
+    current_hash = get_site_hash()
+    previous_hash = read_previous_hash()
+
+    if not previous_hash:
+        send_telegram_message("✅ İzleme başlatıldı.")
+        write_current_hash(current_hash)
+        return
+
+    if current_hash != previous_hash:
+        send_telegram_message("🔄 Web sitesinde değişiklik tespit edildi!")
+        write_current_hash(current_hash)
     else:
-        print("Telegram Bot Token veya Chat ID ortam değişkenleri tanımlanmamış.")
-
-async def main():
-    current_content = get_website_content(WEBSITE_URL)
-    if current_content:
-        current_hash = calculate_hash(current_content)
-        previous_hash = load_previous_hash()
-
-        if previous_hash is None:
-            print("İlk çalıştırma. Hash kaydediliyor.")
-            save_current_hash(current_hash)
-        elif current_hash != previous_hash:
-            print("Web sitesinde bir değişiklik tespit edildi!")
-            await send_telegram_message(f"Dikkat! {WEBSITE_URL} adresinde bir güncelleme tespit edildi.")
-            save_current_hash(current_hash)
-        else:
-            print("Web sitesinde herhangi bir değişiklik yok.")
-    else:
-        print("Web sitesi içeriği alınamadı.")
+        send_telegram_message("⏳ Kontrol yapıldı, değişiklik yok.")
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+    main()
