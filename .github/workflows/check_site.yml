@@ -1,55 +1,42 @@
-name: Check Website Changes
+name: Web Siteyi Kontrol Et
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "*/30 * * * *"  # Her 30 dakikada bir çalışır
   workflow_dispatch:
 
 jobs:
   check-site:
     runs-on: ubuntu-latest
 
-    env:
-      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4
-      with:
-        persist-credentials: false
-        fetch-depth: 0
+      - name: Reposu klonla
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
+      - name: Python ortamını kur
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
 
-    - name: Install requirements
-      run: pip install python-telegram-bot requests
+      - name: Gereken paketleri kur
+        run: pip install python-telegram-bot==13.15 requests
 
-    - name: Install dependencies
-      run: pip install python-telegram-bot==13.15 requests
+      - name: Siteyi kontrol et
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python check_site.py
 
-    - name: Run check_site.py
-      run: python check_site.py
+      - name: Git yapılandır
+        run: |
+          git config user.name "santral06"
+          git config user.email "metemet06@gmail.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/santral06/website-monitor.git
 
-    - name: Configure Git
-      run: |
-        git config user.name "github-actions"
-        git config user.email "github-actions@github.com"
-
-    - name: Switch to state branch
-      run: |
-        git fetch origin
-        git checkout -B state origin/state || git checkout -b state
-
-    - name: Pull latest changes (skip conflicts)
-      run: |
-        git pull origin state --rebase || git rebase --abort || echo "Pull failed"
-
-    - name: Commit and push if changed
-      run: |
-        git add site_hash.txt
-        git commit -m "🔄 Hash güncellendi (değişiklik algılandı)" || echo "No changes to commit"
-        git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }} state || echo "Push failed"
+      - name: Değişiklik varsa state branch'ine pushla
+        run: |
+          git fetch origin
+          git checkout -B state origin/state || git checkout -b state
+          git add site_hash.txt
+          git commit -m "🔄 Hash güncellendi (değişiklik algılandı)" || echo "Commit yok"
+          git push origin state
