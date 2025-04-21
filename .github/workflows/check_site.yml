@@ -37,11 +37,15 @@ jobs:
           python check_site.py
 
       - name: Commit updated hash file if changed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
+          git remote set-url origin https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}
           git fetch origin state
           git checkout -b state origin/state
           git add site_hash.txt
           git commit -m "🔄 Hash güncellendi (değişiklik algılandı)" || echo "No changes to commit"
           git push origin state
+
