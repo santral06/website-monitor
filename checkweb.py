@@ -1,35 +1,41 @@
-
-
-import tracemalloc
 import requests
-import telegram
+import hashlib
 import os
-from datetime import datetime
+import telegram
 
-# Initialize tracing (fixes the warning)
-tracemalloc.start()
-
-# Config - ALWAYS validate these first
 URL = "https://drmustafametin.com"
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN") 
-CHAT_ID = os.getenv("CHAT_ID")
+HASH_FILE = "site_hash.txt"
 
-def validate_credentials():
-    """Check if env vars exist before running"""
-    if not TELEGRAM_TOKEN or not CHAT_ID:
-        raise ValueError("Missing Telegram credentials!")
+TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
+CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
-def send_telegram_message(text: str):
-    """Properly managed Telegram session"""
-    try:
-        bot = telegram.Bot(token=TELEGRAM_TOKEN)
-        bot.send_message(
-            chat_id=CHAT_ID,
-            text=text,
-            parse_mode='HTML',
-            timeout=20  # Prevents hanging
-        )
-    finally:
-        # Clean up resources
-        if 'bot' in locals():
-            del bot
+def get_site_hash():
+    response = requests.get(URL)
+    content = response.text.encode("utf-8")
+    return hashlib.sha256(content).hexdigest()
+
+def read_last_hash():
+    if not os.path.exists(HASH_FILE):
+        return None
+    with open(HASH_FILE, "r") as f:
+        return f.read().strip()
+
+def save_current_hash(current_hash):
+    with open(HASH_FILE, "w") as f:
+        f.write(current_hash)
+
+def send_telegram_message(message):
+    bot = telegram.Bot(token=TELEGRAM_TOKEN)
+    bot.send_message(chat_id=CHAT_ID, text=message)
+
+def main():
+    current_hash = get_site_hash()
+    last_hash = read_last_hash()
+
+    if last_hash and current_hash != last_hash:
+        send_telegram_message("drmustafametin.com sitesinde değişiklik var!")
+    
+    save_current_hash(current_hash)
+
+if __name__ == "__main__":
+    main()
