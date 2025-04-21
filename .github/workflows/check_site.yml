@@ -1,0 +1,30 @@
+name: Check drmustafametin.com for Changes
+
+on:
+  schedule:
+    - cron: "*/5 * * * *" # her 5 dakikada bir
+  workflow_dispatch: # manuel tetikleme
+
+jobs:
+  check_site:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Reponun Checkout'u
+        uses: actions/checkout@v3
+
+      - name: Python Kurulumu
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Gerekli Paketleri Kur
+        run: |
+          pip install -r requirements.txt
+
+      - name: Siteyi Kontrol Et
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python check_site.py
