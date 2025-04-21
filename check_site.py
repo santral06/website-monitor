@@ -1,10 +1,10 @@
 import hashlib
 import requests
 import os
+import subprocess
 import telegram
 
 URL = "https://drmustafametin.com"
-HASH_FILE = "site_hash.txt"
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
@@ -14,14 +14,21 @@ def get_site_hash():
     content = response.text.encode("utf-8")
     return hashlib.sha256(content).hexdigest()
 
-def read_previous_hash():
-    if not os.path.exists(HASH_FILE):
+def get_previous_hash_from_git():
+    try:
+        result = subprocess.run(
+            ["git", "show", "origin/state:site_hash.txt"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
         return ""
-    with open(HASH_FILE, "r") as f:
-        return f.read().strip()
 
-def write_current_hash(hash_value):
-    with open(HASH_FILE, "w") as f:
+def write_current_hash_to_file(hash_value):
+    with open("site_hash.txt", "w") as f:
         f.write(hash_value)
 
 def send_telegram_message(message):
@@ -31,18 +38,16 @@ def send_telegram_message(message):
 
 def main():
     current_hash = get_site_hash()
-    previous_hash = read_previous_hash()
+    previous_hash = get_previous_hash_from_git()
 
     if not previous_hash:
         send_telegram_message("✅ İzleme başlatıldı.")
-        write_current_hash(current_hash)
-        return
-
-    if current_hash != previous_hash:
+    elif current_hash != previous_hash:
         send_telegram_message("🔄 Web sitesinde değişiklik tespit edildi!")
-        write_current_hash(current_hash)
     else:
         send_telegram_message("⏳ Kontrol yapıldı, değişiklik yok.")
+
+    write_current_hash_to_file(current_hash)
 
 if __name__ == "__main__":
     main()
