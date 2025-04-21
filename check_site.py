@@ -38,15 +38,16 @@ def main():
         send_telegram_message("İlk kontrol yapıldı, takip başladı.")
     elif current_hash != last_hash:
         send_telegram_message("🔔 drmustafametin.com sitesinde DEĞİŞİKLİK var!")
+    else:
+        send_telegram_message("✅ drmustafametin.com sitesinde değişiklik YOK.")
+
+    if current_hash != last_hash:
         save_current_hash(current_hash)
-        # Git işlemi: commit + push
         os.system("git config user.name github-actions")
         os.system("git config user.email github-actions@github.com")
         os.system("git add site_hash.txt")
-        os.system('git commit -m "update hash (site changed)"')
-        os.system("git push")
-    else:
-        send_telegram_message("✅ drmustafametin.com sitesinde değişiklik YOK.")
+        os.system('git commit -m "Update hash (site changed)" || echo "No changes to commit"')
+        os.system("git push origin HEAD:state")
 
 if __name__ == "__main__":
     main()
