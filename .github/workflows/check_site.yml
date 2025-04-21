@@ -1,28 +1,52 @@
-name: Website Kontrol ve Telegram Bildirimi
+name: Check Website Changes
 
 on:
   schedule:
-    - cron: '*/5 * * * *' # Her 5 dakikada bir çalıştır
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
 
 jobs:
-  check_website:
+  check-site:
     runs-on: ubuntu-latest
+
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
     steps:
-      - name: Depoyu Kontrol Et
-        uses: actions/checkout@v4
+    - name: Checkout repo
+      uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+        fetch-depth: 0
 
-      - name: Python'ı Ayarla
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.x'
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
 
-      - name: Gerekli Kütüphaneleri Yükle
-        run: pip install -r requirements.txt
+    - name: Install requirements
+      run: pip install python-telegram-bot requests
 
-      - name: Ortam Değişkenlerini Ayarla
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    - name: Run check_site.py
+      run: python check_site.py
 
-      - name: Website'i Kontrol Et ve Telegram Mesajı Gönder
-        run: python check_site.py # Python scriptinizin adını buraya yazın
+    - name: Configure Git
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+
+    - name: Switch to state branch
+      run: |
+        git fetch origin
+        git checkout -B state origin/state || git checkout -b state
+
+    - name: Pull latest changes (skip conflicts)
+      run: |
+        git pull origin state --rebase || git rebase --abort || echo "Pull failed"
+
+    - name: Commit and push if changed
+      run: |
+        git add site_hash.txt
+        git commit -m "🔄 Hash güncellendi (değişiklik algılandı)" || echo "No changes to commit"
+        git push https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }} state || echo "Push failed"
