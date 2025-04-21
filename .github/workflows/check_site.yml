@@ -30,22 +30,19 @@ jobs:
         run: |
           python check_site.py
 
-      - name: Git işlemleri
+      - name: Pull with rebase and resolve conflicts automatically
         run: |
-          git config --global user.name "santral06"
-          git config --global user.email "santral06@users.noreply.github.com"
-          
-          # Eğer dosya değiştiyse commit et
-          git add site_hash.txt
-          git commit -m "Add or update site_hash.txt" || echo "No changes to commit"
-          
-          # `state` branch'ine geçiş yap ve uzak branch ile senkronize et
-          git checkout state || git checkout -b state
-          
-          # Uzak branch'i pull et (rebase ile güncelle)
-          git pull --rebase origin state || echo "pull failed"
-
-          # Değişiklikleri commit et ve push et
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}
+        
+          git fetch origin state || git checkout -b state
+          git checkout state || git checkout -b state origin/state
+      
+          git pull origin state --rebase || git rebase --skip || echo "pull failed"
+        
+          echo "$NEW_HASH" > site_hash.txt
+        
           git add site_hash.txt
           git commit -m "🔄 Hash güncellendi (değişiklik algılandı)" || echo "No changes to commit"
-          git push origin state
+          git push origin state || echo "Push failed"
