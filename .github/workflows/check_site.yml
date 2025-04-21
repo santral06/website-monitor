@@ -43,6 +43,15 @@ jobs:
             echo "site_hash.txt bulunamadı. Muhtemelen değişiklik yoktu."
             exit 0
           fi
+          
+      - name: Kopyalanan hash dosyasını al
+        run: |
+          if [ -f temp/site_hash.txt ]; then
+            cp temp/site_hash.txt site_hash.txt
+          else
+            echo "Geçici hash dosyası bulunamadı. Çıkılıyor."
+            exit 0
+          fi
 
       - name: Commit and push to state branch
         run: |
