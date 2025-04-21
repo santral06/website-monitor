@@ -32,9 +32,13 @@ def main():
     current_hash = get_site_hash()
     last_hash = read_last_hash()
 
-    if last_hash and current_hash != last_hash:
-        send_telegram_message("drmustafametin.com sitesinde değişiklik var!")
-    
+    if last_hash is None:
+        send_telegram_message("İlk kontrol yapıldı, takip başladı.")
+    elif current_hash != last_hash:
+        send_telegram_message("🔔 drmustafametin.com sitesinde DEĞİŞİKLİK var!")
+    else:
+        send_telegram_message("✅ drmustafametin.com sitesinde değişiklik YOK.")
+
     save_current_hash(current_hash)
 
 if __name__ == "__main__":
