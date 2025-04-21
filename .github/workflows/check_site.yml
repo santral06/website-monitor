@@ -10,16 +10,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout main repository
+      - name: Checkout main (current) branch
         uses: actions/checkout@v3
         with:
-          persist-credentials: true
           fetch-depth: 0
 
-      - name: Checkout hash state branch
+      - name: Fetch and checkout state branch hash file
         run: |
           git fetch origin state
-          git checkout state -- site_hash.txt || echo "No previous hash file."
+          git checkout origin/state -- site_hash.txt
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -36,3 +35,14 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           python check_site.py
+
+      - name: Commit updated hash (if needed)
+        run: |
+          git config --global user.name github-actions
+          git config --global user.email github-actions@github.com
+          git fetch origin state
+          git switch state
+          git checkout main -- check_site.py
+          git add site_hash.txt
+          git commit -m "Update site hash" || echo "No changes"
+          git push origin state
