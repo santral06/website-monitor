@@ -1,48 +1,48 @@
-import requests
 import hashlib
+import requests
 import os
 import telegram
-from datetime import datetime
 
 URL = "https://drmustafametin.com"
 HASH_FILE = "site_hash.txt"
 
-TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
-CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 def get_site_hash():
     response = requests.get(URL)
     content = response.text.encode("utf-8")
     return hashlib.sha256(content).hexdigest()
 
-def read_last_hash():
+def read_previous_hash():
     if not os.path.exists(HASH_FILE):
-        return None
-    with open(HASH_FILE, "r", encoding="utf-8") as f:
+        return ""
+    with open(HASH_FILE, "r") as f:
         return f.read().strip()
 
-def save_current_hash(current_hash):
-    with open(HASH_FILE, "w", encoding="utf-8") as f:
-        f.write(current_hash)
+def write_current_hash(hash_value):
+    with open(HASH_FILE, "w") as f:
+        f.write(hash_value)
 
 def send_telegram_message(message):
-    bot = telegram.Bot(token=TELEGRAM_TOKEN)
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    bot.send_message(chat_id=CHAT_ID, text=f"[{now}] {message}")
+    if BOT_TOKEN and CHAT_ID:
+        bot = telegram.Bot(token=BOT_TOKEN)
+        bot.send_message(chat_id=CHAT_ID, text=message)
 
 def main():
     current_hash = get_site_hash()
-    last_hash = read_last_hash()
+    previous_hash = read_previous_hash()
 
-    if last_hash is None:
-        send_telegram_message("🔄 İlk kontrol yapıldı, takip başladı.")
-    elif current_hash != last_hash:
-        send_telegram_message("🔔 drmustafametin.com sitesinde DEĞİŞİKLİK var!")
+    if not previous_hash:
+        send_telegram_message("✅ İzleme başlatıldı.")
+        write_current_hash(current_hash)
+        return
+
+    if current_hash != previous_hash:
+        send_telegram_message("🔄 Web sitesinde değişiklik tespit edildi!")
+        write_current_hash(current_hash)
     else:
-        send_telegram_message("✅ drmustafametin.com sitesinde değişiklik YOK.")
-
-    if current_hash != last_hash:
-        save_current_hash(current_hash)
+        send_telegram_message("⏳ Kontrol yapıldı, değişiklik yok.")
 
 if __name__ == "__main__":
     main()
