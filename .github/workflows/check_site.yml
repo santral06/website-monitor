@@ -2,7 +2,7 @@ name: Web Sitesi Takibi
 
 on:
   schedule:
-    - cron: "*/5 * * * *"  # Her 5 dakikada bir çalışır
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Kodu çek (kendi PAT ile)
+      - name: Kodu çek (PAT ile)
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.PAT_TOKEN }}
@@ -27,14 +27,17 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          python check_site.py
+        run: python check_site.py
 
       - name: Değişiklik varsa commit et
         run: |
           git config --global user.name "santral06"
           git config --global user.email "santral06@users.noreply.github.com"
           git checkout state || git checkout -b state
+          
+          # Uzak branch ile senkronize et
+          git pull --rebase origin state || echo "pull failed"
+
           git add site_hash.txt
           git commit -m "🔄 Hash güncellendi (değişiklik algılandı)" || echo "No changes to commit"
           git push origin state
