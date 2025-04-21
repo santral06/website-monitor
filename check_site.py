@@ -18,11 +18,11 @@ def get_site_hash():
 def read_last_hash():
     if not os.path.exists(HASH_FILE):
         return None
-    with open(HASH_FILE, "r") as f:
+    with open(HASH_FILE, "r", encoding="utf-8") as f:
         return f.read().strip()
 
 def save_current_hash(current_hash):
-    with open(HASH_FILE, "w") as f:
+    with open(HASH_FILE, "w", encoding="utf-8") as f:
         f.write(current_hash)
 
 def send_telegram_message(message):
@@ -35,7 +35,7 @@ def main():
     last_hash = read_last_hash()
 
     if last_hash is None:
-        send_telegram_message("İlk kontrol yapıldı, takip başladı.")
+        send_telegram_message("🔄 İlk kontrol yapıldı, takip başladı.")
     elif current_hash != last_hash:
         send_telegram_message("🔔 drmustafametin.com sitesinde DEĞİŞİKLİK var!")
     else:
@@ -43,11 +43,6 @@ def main():
 
     if current_hash != last_hash:
         save_current_hash(current_hash)
-        os.system("git config user.name github-actions")
-        os.system("git config user.email github-actions@github.com")
-        os.system("git add site_hash.txt")
-        os.system('git commit -m "Update hash (site changed)" || echo "No changes to commit"')
-        os.system("git push origin HEAD:state")
 
 if __name__ == "__main__":
     main()
