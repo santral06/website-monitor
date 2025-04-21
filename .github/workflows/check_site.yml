@@ -38,7 +38,7 @@ jobs:
 
       - name: Commit updated hash file if changed
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
@@ -48,4 +48,5 @@ jobs:
           git add site_hash.txt
           git commit -m "🔄 Hash güncellendi (değişiklik algılandı)" || echo "No changes to commit"
           git push origin state
+
 
