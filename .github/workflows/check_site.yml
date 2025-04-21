@@ -2,18 +2,24 @@ name: Check drmustafametin.com for Changes
 
 on:
   schedule:
-    - cron: "*/5 * * * *"  # Her 5 dakikada bir çalıştır
-  workflow_dispatch:       # Manuel tetikleme seçeneği
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
 
 jobs:
   check-site:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout main repository
         uses: actions/checkout@v3
         with:
-          persist-credentials: true  # Git işlemleri için gerekli
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Checkout hash state branch
+        run: |
+          git fetch origin state
+          git checkout state -- site_hash.txt || echo "No previous hash file."
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -24,14 +30,9 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Check for site changes
+      - name: Run site check
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           python check_site.py
-
-      - name: Push hash update if site changed
-        if: success()
-        run: |
-          git status
