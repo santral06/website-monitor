@@ -1,0 +1,24 @@
+# Python cache dosyaları
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Ortam dosyaları
+.env
+.env.*
+
+# Geçici log ve çıktı dosyaları
+*.log
+*.tmp
+*.swp
+*.bak
+
+# site izleme için hash dosyası
+site_hash.txt
+
+# PyCharm ve VSCode gibi editörlerin ayar dosyaları
+.idea/
+.vscode/
+
+# GitHub Actions gibi geçici çalışma dizinleri
+temp/
