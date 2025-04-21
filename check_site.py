@@ -5,6 +5,7 @@ import subprocess
 import telegram
 
 URL = "https://drmustafametin.com"
+TEMP_HASH_FILE = "temp/site_hash.txt"  # temp klasörüne yaz
 
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
@@ -27,8 +28,9 @@ def get_previous_hash_from_git():
     except subprocess.CalledProcessError:
         return ""
 
-def write_current_hash_to_file(hash_value):
-    with open("site_hash.txt", "w") as f:
+def write_current_hash_to_temp(hash_value):
+    os.makedirs("temp", exist_ok=True)
+    with open(TEMP_HASH_FILE, "w") as f:
         f.write(hash_value)
 
 def send_telegram_message(message):
@@ -47,7 +49,7 @@ def main():
     else:
         send_telegram_message("⏳ Kontrol yapıldı, değişiklik yok.")
 
-    write_current_hash_to_file(current_hash)
+    write_current_hash_to_temp(current_hash)
 
 if __name__ == "__main__":
     main()
