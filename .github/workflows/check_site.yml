@@ -1,51 +1,55 @@
-name: Web Siteyi Kontrol Et
+name: Website Monitor
 
 on:
   schedule:
-    - cron: "*/30 * * * *"  # Her 30 dakikada bir çalışır
+    - cron: '*/15 * * * *'  # Her 15 dakikada bir çalışır
   workflow_dispatch:
-permissions:
-  contents: write 
+
 jobs:
-  check-site:
+  monitor:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Reposu klonla
-        uses: actions/checkout@v4
+      - name: Checkout repository (main branch)
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # tüm branch'lere erişmek için
 
-      - name: Python ortamını kur
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: '3.10'
 
-      - name: Gereken paketleri kur
-        run: pip install python-telegram-bot==13.15 requests
+      - name: Install dependencies
+        run: pip install requests python-telegram-bot==13.15
 
-      - name: Siteyi kontrol et
+      - name: Run monitor script
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python check_site.py
+        run: python monitor.py
 
-      - name: Git yapılandır
+      - name: Checkout state branch
         run: |
-          git config user.name "santral06"
-          git config user.email "metemet06@gmail.com"
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/santral06/website-monitor.git
-
-      - name: Değişiklik varsa state branch'ine pushla
-        run: |
-          git config user.name "santral06"
-          git config user.email "you@example.com"
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/santral06/website-monitor.git
-
-          git stash push site_hash.txt || echo "Stash boş"
-          git fetch origin
+          git fetch origin state || echo "state branch'i yok, yeni oluşturulacak"
           git checkout -B state origin/state || git checkout -b state
-          git stash pop || echo "Stash yok"
 
+      - name: Copy latest hash file from run
+        run: |
+          # Eğer monitor.py dosyası yeni site_hash.txt dosyası oluşturduysa onu al
+          if [ -f site_hash.txt ]; then
+            echo "Yeni hash bulundu. Commit için hazırlanıyor."
+          else
+            echo "site_hash.txt bulunamadı. Muhtemelen değişiklik yoktu."
+            exit 0
+          fi
+
+      - name: Commit and push to state branch
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
           git add site_hash.txt
           git commit -m "🔄 Hash güncellendi (değişiklik algılandı)" || echo "Commit yok"
-          git pull origin state --rebase || git rebase --abort || echo "Rebase başarısız"
-          git push origin state
+          git pull origin state --rebase || echo "Rebase gerekmedi"
+          git push origin state || echo "Push başarısız olabilir (değişiklik yoksa normaldir)"
+
