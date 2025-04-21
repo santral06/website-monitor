@@ -2,6 +2,7 @@ import requests
 import hashlib
 import os
 import telegram
+from datetime import datetime
 
 URL = "https://drmustafametin.com"
 HASH_FILE = "site_hash.txt"
@@ -26,7 +27,8 @@ def save_current_hash(current_hash):
 
 def send_telegram_message(message):
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
-    bot.send_message(chat_id=CHAT_ID, text=message)
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    bot.send_message(chat_id=CHAT_ID, text=f"[{now}] {message}")
 
 def main():
     current_hash = get_site_hash()
@@ -36,10 +38,15 @@ def main():
         send_telegram_message("İlk kontrol yapıldı, takip başladı.")
     elif current_hash != last_hash:
         send_telegram_message("🔔 drmustafametin.com sitesinde DEĞİŞİKLİK var!")
+        save_current_hash(current_hash)
+        # Git işlemi: commit + push
+        os.system("git config user.name github-actions")
+        os.system("git config user.email github-actions@github.com")
+        os.system("git add site_hash.txt")
+        os.system('git commit -m "update hash (site changed)"')
+        os.system("git push")
     else:
         send_telegram_message("✅ drmustafametin.com sitesinde değişiklik YOK.")
-
-    save_current_hash(current_hash)
 
 if __name__ == "__main__":
     main()
